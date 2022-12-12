@@ -11,6 +11,8 @@ import com.example.blockchainmonitorservice.entity.ScanningProcess;
 import com.example.blockchainmonitorservice.repository.AddressDao;
 import com.example.blockchainmonitorservice.repository.ScanningProcessRepository;
 import com.example.blockchainmonitorservice.service.BtcService;
+import com.example.blockchainmonitorservice.service.producer.Producer;
+import com.fasterxml.jackson.core.JsonProcessingException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.stereotype.Service;
@@ -35,6 +37,9 @@ public class BtcServiceImpl implements BtcService {
 
     @Autowired
     private AddressDao addressDao;
+
+    @Autowired
+    private Producer producer;
 
     private String chain = "btc";
 
@@ -91,7 +96,7 @@ public class BtcServiceImpl implements BtcService {
                 }
                 transactionResponseDtoList.put(element.getTxid(), listAddress);
                 List<Transaction> transactionList = getTransactionHaveAddress(transactionResponseDtoList);
-                sendMessage(transactionList);
+                sendMessageKafka(transactionList);
             });
         });
     }
@@ -157,14 +162,27 @@ public class BtcServiceImpl implements BtcService {
         return transactionList;
     }
 
-    public void sendMessage(List<Transaction> transactionList) {
+    public void sendMessageKafka(List<Transaction> transactionList) {
         transactionList.forEach((element) -> {
-            if(element.getValue().equals(String.valueOf(ScanningProcessConstant.DEPOSIT)))
-            {
-                System.out.println("DEPOSIT:" +element);
-            } else {
-                System.out.println("WITHDRAW:" +element);
+            try {
+                if(element.getValue().equals(String.valueOf(ScanningProcessConstant.DEPOSIT)))
+                {
+                    producer.sendMessage(element,String.valueOf(ScanningProcessConstant.DEPOSIT));
+                } else {
+                    producer.sendMessage(element,String.valueOf(ScanningProcessConstant.WITHDRAW));
+                }
+            } catch (JsonProcessingException e) {
+                    throw new RuntimeException(e);
             }
         });
     }
+
+//    public String sendMessage(FoodOrder foodOrder) throws JsonProcessingException {
+//        String orderAsMessage = objectMapper.writeValueAsString(foodOrder);
+//        kafkaTemplate.send(orderTopic,1, String.valueOf(0), orderAsMessage);
+//
+//        log.info("food order produced {}", orderAsMessage);
+//
+//        return "message sent";
+//    }
 }
