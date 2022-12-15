@@ -68,18 +68,18 @@ public class BtcServiceImpl implements BtcService {
         }
     }
 
-    public boolean isScanningProcess() {
+    private boolean isScanningProcess() {
         boolean isScanning = scanningProcessRepository.existsByStatus(String.valueOf(ScanningProcessConstant.IN_PROGRESS));
         return isScanning;
     }
 
-    public long getLatestBlockHeight(){
+    private long getLatestBlockHeight(){
         String url = "latest";
         BtcRawResponseDto<LatestBlockResponseDto> latestBlockResponseDto = latestblockdto.callExchange(new ParameterizedTypeReference<>() {},null, url);
         return latestBlockResponseDto.getResult().getBlockNumber();
     }
 
-    public void getTransactionByBlockNumber(List<Long> listBlockNumber){
+    private void getTransactionByBlockNumber(List<Long> listBlockNumber){
         String url = "transactions";
         listBlockNumber.forEach((blockNumber) -> {
             BtcRequestDto btcRequestDto = new BtcRequestDto();
@@ -101,35 +101,20 @@ public class BtcServiceImpl implements BtcService {
         });
     }
 
-    public long insertScanProcess(Long fromBlock, Long toBlock) {
+    private long insertScanProcess(Long fromBlock, Long toBlock) {
         ScanningProcess scanningProcess = new ScanningProcess();
         Timestamp timeStart = new Timestamp(System.currentTimeMillis());
         scanningProcess.setStartAt(timeStart);
-        System.out.println(timeStart);
         scanningProcess.setFromBlock(fromBlock);
         scanningProcess.setChain(chain);
         scanningProcess.setStatus(String.valueOf(ScanningProcessConstant.IN_PROGRESS));
         scanningProcess.setToBlock(toBlock);
         scanningProcessRepository.save(scanningProcess);
-        System.out.println(scanningProcess);
         //exception
         return scanningProcess.getId();
     }
 
-    //Tra ve null hoac address
-    public List<Address> getAddressListAndValue() {
-        String addressString = "btc_29f18c747ca1b29914605a3ca0ea0966944156d245335b1bad1d14ad18b6e2a61";
-        List<Address> addressList = new ArrayList<>();
-        Address address = addressDao.findAddressByKey(addressString);
-        if (address != null)
-        {
-            addressList.add(address);
-        }
-        return addressList;
-    }
-
-    //Tra ve null hoac value
-    public String checkAddressValue(String addressString) {
+    private String checkAddressValue(String addressString) {
         String value = addressDao.findValueByKey(addressString);
         if (value != null)
         {
@@ -138,7 +123,7 @@ public class BtcServiceImpl implements BtcService {
         return null;
     }
 
-    public boolean updateProcessEvent(Long processId) {
+    private boolean updateProcessEvent(Long processId) {
         ScanningProcess scanningProcess = scanningProcessRepository.getReferenceById(processId);
         scanningProcess.setStatus(String.valueOf(ScanningProcessConstant.COMPLETE));
         Timestamp timeEnd = new Timestamp(System.currentTimeMillis());
@@ -147,7 +132,7 @@ public class BtcServiceImpl implements BtcService {
         return true;
     }
 
-    public List<Transaction> getTransactionHaveAddress(Map<String,List<String>> listTransaction) {
+    private List<Transaction> getTransactionHaveAddress(Map<String,List<String>> listTransaction) {
         List<Transaction> transactionList = new ArrayList<>();
         for (var entry : listTransaction.entrySet()) {
             entry.getValue().forEach((element) -> {
@@ -162,7 +147,7 @@ public class BtcServiceImpl implements BtcService {
         return transactionList;
     }
 
-    public void sendMessageKafka(List<Transaction> transactionList) {
+    private void sendMessageKafka(List<Transaction> transactionList) {
         transactionList.forEach((element) -> {
             try {
                 if(element.getValue().equals(String.valueOf(ScanningProcessConstant.DEPOSIT)))
@@ -176,13 +161,4 @@ public class BtcServiceImpl implements BtcService {
             }
         });
     }
-
-//    public String sendMessage(FoodOrder foodOrder) throws JsonProcessingException {
-//        String orderAsMessage = objectMapper.writeValueAsString(foodOrder);
-//        kafkaTemplate.send(orderTopic,1, String.valueOf(0), orderAsMessage);
-//
-//        log.info("food order produced {}", orderAsMessage);
-//
-//        return "message sent";
-//    }
 }
