@@ -1,5 +1,7 @@
 package com.example.blockchainmonitorservice.entity;
 
+import com.example.blockchainmonitorservice.constant.ScanningProcessChainEnum;
+import com.example.blockchainmonitorservice.constant.ScanningProcessStatusEnum;
 import lombok.Data;
 
 import javax.persistence.*;
@@ -11,9 +13,8 @@ import java.time.LocalDateTime;
 @Table(name = "scanning_process")
 public class ScanningProcess {
     @Id
-    @Column(name = "id")
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long Id;
+    private Long id;
 
     @Column(name = "start_at")
     private Timestamp startAt;
@@ -21,8 +22,8 @@ public class ScanningProcess {
     @Column(name = "end_at")
     private Timestamp endAt;
 
-    @Column(name = "chain")
-    private String chain;
+    @Enumerated(EnumType.STRING)
+    private ScanningProcessChainEnum chain;
 
     @Column(name = "from_block")
     private Long fromBlock;
@@ -30,6 +31,6 @@ public class ScanningProcess {
     @Column(name = "to_block")
     private Long toBlock;
 
-    @Column(name = "status")
-    private String status;
+    @Enumerated(EnumType.STRING)
+    private ScanningProcessStatusEnum status;
 }
